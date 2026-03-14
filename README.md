@@ -1,11 +1,11 @@
- # EXPERIMENT-04-INTERFACING-DIGITAL-SENSOR-DHT-11-Soil-Moisture-sensor--WITH-EDGE-DEVELOPMENT-BOARD-
+ # EXPERIMENT-04 Interfacing Digital Sensor DHT 11 Soil Moisture sensor With Edge Development Board.
 
 ---
 
-### **NAME:**  
-### **DEPARTMENT:**  
-### **ROLL NO:**  
-### **DATE OF EXPERIMENT:**  
+### **NAME:** SHARON STEFFANI
+### **DEPARTMENT:** B.E.CSE(IOT)
+### **ROLL NO:** 212223110049
+### **DATE OF EXPERIMENT:** 26.02.2026
 
 ---
 
@@ -63,52 +63,137 @@ Connect the Soil Moisture Sensor (REES52) GND to any GND.
 Connect the Soil Moisture Sensor (REES52) D0 to any one GPIO. 
 Connect the Soil Moisture Sensor (REES52) A0 to any one GPIO. 
 
-Experiment 4A
+## Experiment 4A
 ## PROGRAM (Python)
 ```
+import Adafruit_DHT
+import paho.mqtt.client as mqtt
+import ssl
+import time
 
+# ---------------- DHT11 Setup ----------------
+DHT_SENSOR = Adafruit_DHT.DHT11
+DHT_PIN = 18   # GPIO4
 
- 
+# ---------------- HiveMQ Cloud Credentials ----------------
+MQTT_BROKER = "20db258670cd4ef1a3a90a4fdb5a7814.s1.eu.hivemq.cloud"
+MQTT_PORT = 8883
+MQTT_USER = "hivemq.webclient.1772183447343"
+MQTT_PASSWORD = "zAj620RC<V$9xm@EUe.w"
 
+TEMP_TOPIC = "raspberrypi/dht/temperature"
+HUM_TOPIC = "raspberrypi/dht/humidity"
 
+# ---------------- MQTT Setup ----------------
+client = mqtt.Client()
 
- 
-````
+client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
+client.tls_set(tls_version=ssl.PROTOCOL_TLS)
+client.connect(MQTT_BROKER, MQTT_PORT)
 
+print("Connected to HiveMQ Cloud")
+print("Reading DHT11 Sensor...\n")
+
+# ---------------- Main Loop ----------------
+while True:
+    humidity, temperature = Adafruit_DHT.read(DHT_SENSOR, DHT_PIN)
+
+    if humidity is not None and temperature is not None:
+        print(f"Temperature = {temperature} °C")
+        print(f"Humidity    = {humidity} %")
+        print("---------------------------")
+
+        # Publish to HiveMQ
+        client.publish(TEMP_TOPIC, temperature)
+        client.publish(HUM_TOPIC, humidity)
+
+        print("Data sent to HiveMQ\n")
+
+    else:
+        print("Sensor failure. Check wiring.")
+
+    time.sleep(10)
+```
 ### OUPUT  
-Experiment 4A
 
-# FIGURE -04 ADD TITILE HERE 
+<img width="1200" height="1600" alt="image" src="https://github.com/user-attachments/assets/4bae88e5-20dc-420a-8172-d41871c3aec8" />
 
-#  FIGURE -05 ADD TITILE HERE 
+![3d777e81-2854-44b8-8d10-ec4cd9c3f772](https://github.com/user-attachments/assets/443d7962-ce20-41c7-8a77-34266184c018)
 
-# FIGURE -06 ADD TITLE HERE 
+![2c30660a-4629-4d23-8a60-f700d3fb5725](https://github.com/user-attachments/assets/d8333f00-7a9b-4463-881e-696913b10029)
 
-Experiment 4B
+
+
+## Experiment 4B
 ## PROGRAM (Python)
 ```
+import RPi.GPIO as GPIO
+import time
+import paho.mqtt.client as mqtt
+import json
+
+# ---------------- GPIO Setup ----------------
+DIGITAL_PIN = 24   # D0 connected to GPIO 23
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(DIGITAL_PIN, GPIO.IN)
+
+# ---------------- MQTT Setup ----------------
+broker = "20db258670cd4ef1a3a90a4fdb5a7814.s1.eu.hivemq.cloud"
+port = 8883
+topic = "Soil Moisture"
+
+username = "hivemq.webclient.1772183447343"
+password = "zAj620RC<V$9xm@EUe.w"
+
+client = mqtt.Client()
+client.username_pw_set(username, password)
+client.tls_set()  # Required for HiveMQ Cloud (TLS)
+
+client.connect(broker, port)
+client.loop_start()
+
+print("Connected to HiveMQ Cloud")
+
+# ---------------- Main Loop ----------------
+try:
+    while True:
+        digital_value = GPIO.input(DIGITAL_PIN)
+
+        # Convert Digital Value
+        if digital_value == 0:
+            moisture_status = "WET"
+            humidity_value = 100
+        else:
+            moisture_status = "DRY"
+            humidity_value = 0
+
+        payload = {
+            "temperature": humidity_value,  # shown like temperature
+            "humidity": moisture_status     # shown like humidity
+        }
+
+        client.publish(topic, json.dumps(payload))
+        print("Published:", payload)
+
+        time.sleep(2)
+
+except KeyboardInterrupt:
+    GPIO.cleanup()
+    print("Program Stopped")
+```
+
+### OUPUT :
+
+![123bb227-d943-4bcd-bf1a-f11c58e8c6bc](https://github.com/user-attachments/assets/4143a127-92fc-49ef-8f4d-5e5192d73df7)
+
+![82945944-776a-4ea0-a6d2-1ea37f5025be](https://github.com/user-attachments/assets/5b408351-c52a-43ef-ad23-7f988e593fb8)
 
 
- 
-
-
-
- 
-````
-
-### OUPUT  
-
-# FIGURE -07 ADD TITILE HERE 
-
-#  FIGURE -08 ADD TITILE HERE 
-
-# FIGURE -09 ADD TITLE HERE 
-
-
+![610374da-7508-48f7-8df2-1a9722b2c340](https://github.com/user-attachments/assets/4eca9fa1-b5ec-4e8d-a3d1-6f8db51a48e2)
 
 
 ## **RESULT:**  
 The **Temperature and humidity sensor (DHT 11) Soil Moisture Sensor (REES52)** was successfully interfaced with the **Raspberry Pi 4**, and real-time **Temperature, Humidity and Soil Moisture level** were read and displayed in Console and HiveMq Cloud. 
 
----
 
